@@ -1,5 +1,7 @@
 # PyForge · Python 训练台
 
+线上地址：**https://ndajek.github.io/Pyforge/**
+
 **PyForge** 是面向计算机二级 Python 的刷题与上机训练台：分级题库、遗忘曲线复习、浏览器内代码判题、模拟考试。
 纯静态页面，可挂 GitHub Pages；账号支持本地 / 自建服务端 / Supabase 三种后端。
 
