@@ -290,9 +290,11 @@ function master(id) { S.rec[id].w = 0; save(); renderWrong(); paintSide(); }
 
 /* ---------- exam ---------- */
 let EX = null;
+/* 模考只出 2022 版大纲内的题：公共基础 10 道 + 其余章节 30 道，超纲拓展不参与抽题 */
+const EXAM_SKIP = ['面向对象（超纲拓展）'];
 function renderExam() {
   const pub = ALL.filter(q => q.ch === '公共基础知识');
-  const rest = ALL.filter(q => q.ch !== '公共基础知识');
+  const rest = ALL.filter(q => q.ch !== '公共基础知识' && !EXAM_SKIP.includes(q.ch));
   const paper = shuffle(pub).slice(0, 10).concat(shuffle(rest).slice(0, 30));
   EX = { list: shuffle(paper), ans: {}, left: 30 * 60, done: false };
   main().innerHTML = `<div class="page wide">

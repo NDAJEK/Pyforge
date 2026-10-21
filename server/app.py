@@ -149,12 +149,22 @@ class Handler(SimpleHTTPRequestHandler):
         super().end_headers()
 
     # ---------- 工具 ----------
+    def _drain(self, n, cap=16 * 1024 * 1024):
+        """把超限的请求体读掉再回 413，否则客户端会收到连接重置而不是 413"""
+        left = min(n, cap)
+        while left > 0:
+            chunk = self.rfile.read(min(65536, left))
+            if not chunk:
+                break
+            left -= len(chunk)
+
     def body(self):
         """读 JSON 请求体；超过上限返回 None（由调用方回 413），解析失败返回 {}"""
         n = int(self.headers.get('Content-Length') or 0)
         if n <= 0:
             return {}
         if n > MAX_BODY:
+            self._drain(n)
             return None
         try:
             return json.loads(self.rfile.read(n) or b'{}')
