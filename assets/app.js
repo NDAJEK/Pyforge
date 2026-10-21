@@ -95,7 +95,7 @@ function clearTimer() { if (timer) { clearInterval(timer); timer = null; } }
 let view = 'home';
 function go(v, opt) {
   clearTimer(); view = v; opt = opt || {};
-  document.querySelectorAll('#nav a').forEach(a => a.classList.toggle('on', a.dataset.view === v));
+  document.querySelectorAll('#nav a, #tabbar a').forEach(a => a.classList.toggle('on', a.dataset.view === v));
   main().scrollTop = 0;
   const fn = { home: renderHome, wrong: renderWrong, exam: renderExam, stats: renderStats, code: renderCode }[v];
   if (v === 'quiz') startQuiz(opt); else fn();
@@ -111,6 +111,8 @@ function paintSide() {
   $('#doneCnt').textContent = st.seen;
   $('#totalCnt').textContent = st.total;
   $('#navWrong').textContent = st.wrongCount ? st.wrongCount : '';
+  const tw = document.getElementById('tabWrong');
+  if (tw) tw.textContent = st.wrongCount ? st.wrongCount : '';
 }
 
 /* ---------- home ---------- */
@@ -383,7 +385,21 @@ function renderStats() {
     return `<div class="hbar"><div class="l">${esc(p.title)}</div><div class="t"><i style="width:${pc}%"></i></div><div class="n">${r ? r.pass + '/' + r.total : '未做'}</div></div>`;
   }).join('')}
     </div>
-    <div style="margin-top:26px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <div class="panel" style="margin-top:16px"><h3>账号</h3>
+      <div style="display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:12px">
+        <span style="color:var(--muted)">当前账号</span><b>${esc(Auth.user || '未登录')}</b>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:16px">
+        <span style="color:var(--muted)">同步方式</span>
+        <b>${Auth.mode === 'supabase' ? '云端 · Supabase' : Auth.mode === 'server' ? '自建服务器' : '仅本机'}</b>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" onclick="toggleTheme()">切换深浅色</button>
+        <button class="btn ghost" onclick="openCloudConfig()">云端配置</button>
+        <button class="btn ghost" onclick="doLogout()">退出登录</button>
+      </div>
+    </div>
+    <div style="margin-top:20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
       <button class="btn" onclick="exportData()">导出进度</button>
       <button class="btn" onclick="importData()">导入进度</button>
       <button class="btn ghost" onclick="resetAll()">清空全部进度</button>
@@ -681,12 +697,13 @@ function applyTheme(t) {
     (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
   applyTheme(saved);
 })();
-$('#themeBtn').addEventListener('click', () => {
+function toggleTheme() {
   applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
-});
+}
+$('#themeBtn').addEventListener('click', toggleTheme);
 
 /* ---------- nav ---------- */
-document.querySelectorAll('#nav a').forEach(a => a.addEventListener('click', () => go(a.dataset.view)));
+document.querySelectorAll('#nav a, #tabbar a').forEach(a => a.addEventListener('click', () => go(a.dataset.view)));
 $('#logout').addEventListener('click', doLogout);
 async function doLogout() {
   const okd = await confirmDialog({ title: '退出登录', text: '进度已经保存在账号里，下次登录接着来。', ok: '退出' });

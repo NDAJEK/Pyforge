@@ -2,12 +2,12 @@
 <html lang="zh-CN" data-theme="light">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>PyForge · Python 训练台</title>
 <meta name="description" content="PyForge · Python 训练台：分级题库、艾宾浩斯复习队列、浏览器内代码判题与模考计时，面向计算机二级 Python。">
 <meta name="theme-color" content="#2f6bf6">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%232f6bf6'/%3E%3Cpath d='M23 47V17h11a9.5 9.5 0 0 1 0 19h-5' stroke='%23fff' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='44' cy='45' r='4' fill='%238ab0ff'/%3E%3C/svg%3E">
-<link rel="stylesheet" href="assets/style.css?v=36">
+<link rel="stylesheet" href="assets/style.css?v=41">
 </head>
 <body>
 <div id="gate" class="gate"></div>
@@ -48,17 +48,26 @@
 
 <main id="main"></main>
 
+<nav class="tabbar" id="tabbar">
+  <a data-view="home"><span class="i">◆</span>概览</a>
+  <a data-view="quiz"><span class="i">✎</span>刷题</a>
+  <a data-view="code"><span class="i">⌘</span>编程</a>
+  <a data-view="wrong"><span class="i">✗</span>错题<b id="tabWrong"></b></a>
+  <a data-view="exam"><span class="i">◷</span>模考</a>
+  <a data-view="stats"><span class="i">◑</span>我的</a>
+</nav>
+
 <div id="toasts" class="toasts"></div>
 <div id="modal" class="modal"><div class="modal-box"></div></div>
 
-<script src="data/questions.js?v=36"></script>
-<script src="data/coding.js?v=36"></script>
-<script src="assets/config.js?v=36"></script>
-<script src="assets/supabase.js?v=36"></script>
-<script src="assets/auth.js?v=36"></script>
-<script src="assets/app.js?v=36"></script>
+<script src="data/questions.js?v=41"></script>
+<script src="data/coding.js?v=41"></script>
+<script src="assets/config.js?v=41"></script>
+<script src="assets/supabase.js?v=41"></script>
+<script src="assets/auth.js?v=41"></script>
+<script src="assets/app.js?v=41"></script>
 <!-- Brython 必须静态引入：动态注入时标准库导入会失败 -->
-<script defer src="vendor/brython.min.js?v=36"></script>
-<script defer src="vendor/brython_stdlib.js?v=36"></script>
+<script defer src="vendor/brython.min.js?v=41"></script>
+<script defer src="vendor/brython_stdlib.js?v=41"></script>
 </body>
 </html>
