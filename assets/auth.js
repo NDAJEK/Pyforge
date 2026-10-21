@@ -119,7 +119,8 @@
       // 显式启动了 server/app.py 就用它（本地自建服务优先于云端配置）
       if (await this._probe()) {
         this.mode = 'server';
-        return this._serverInit();
+        const r = await this._serverInit();
+        return { user: r.user, data: this._reconcile(r.user, r.data) };
       }
       if (window.SupaAuth && window.SUPA_CONFIG &&
           window.SUPA_CONFIG.url && window.SUPA_CONFIG.anonKey) {
@@ -127,7 +128,7 @@
         try {
           const s = await SupaAuth.init();
           this.user = s.user || null;
-          return s;
+          return { user: s.user, data: this._reconcile(s.user, s.data) };
         } catch (e) {
           this.user = null;
           return { user: null, data: null };
@@ -225,10 +226,26 @@
 
     /* ---------- 进度读写 ---------- */
     save(data) {
-      if (this.mode === 'supabase') { if (this.user) SupaAuth.save(data); return; }
       if (!this.user) return;
-      writeJSON(DATA_PREFIX + this.user, data);      // 始终本地备份
-      if (this.mode === 'server') this._push(data);
+      data._ts = Date.now();
+      writeJSON(DATA_PREFIX + this.user, data);      // 任何模式都先落地，绝不丢
+      if (this.mode === 'supabase') SupaAuth.save(data);
+      else if (this.mode === 'server') this._push(data);
+    },
+
+    /* 本机副本和云端取较新的那份，避免断网/秒关页面丢数据 */
+    _reconcile(user, remote) {
+      if (!user) return null;
+      const local = readJSON(DATA_PREFIX + user, null);
+      if (!local) return remote;
+      if (!remote) { this._pushCloud(local); return local; }
+      if ((local._ts || 0) > (remote._ts || 0)) { this._pushCloud(local); return local; }
+      return remote;
+    },
+
+    _pushCloud(d) {
+      if (this.mode === 'supabase') SupaAuth.save(d);
+      else if (this.mode === 'server') this._push(d);
     },
 
     _push(data) {

@@ -154,7 +154,7 @@
     save(data) {
       pending = data;
       clearTimeout(timer);
-      timer = setTimeout(() => this.flush(), 800);
+      timer = setTimeout(() => this.flush(), 300);
     },
 
     async flush() {
@@ -181,6 +181,24 @@
 
     configured() { return !!(base() && anon()); }
   };
+
+  /* 页面被切走/关闭时立刻用 keepalive 发出去，别等防抖 */
+  function flushNow() {
+    if (!pending || !sess || !sess.access_token) return;
+    const payload = pending; pending = null;
+    try {
+      fetch(base() + '/rest/v1/progress?on_conflict=user_id', {
+        method: 'POST',
+        keepalive: true,
+        headers: Object.assign(headers(sess.access_token), { 'Prefer': 'resolution=merge-duplicates,return=minimal' }),
+        body: JSON.stringify({ user_id: sess.user.id, payload, updated: new Date().toISOString() })
+      }).catch(() => { pending = pending || payload; });
+    } catch (e) { pending = pending || payload; }
+  }
+  window.addEventListener('pagehide', flushNow);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') flushNow();
+  });
 
   window.SupaAuth = SupaAuth;
 })();
