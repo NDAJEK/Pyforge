@@ -123,12 +123,29 @@ function paintSide() {
 }
 
 /* ---------- home ---------- */
+function startOver() {
+  S.session = null; save();
+  go('quiz', { mode: 'due' });
+}
+
 function renderHome() {
   const st = stats();
   const s = streak();
   const tdy = S.days[today()] || 0;
-  let heroBig, heroUnit, heroTitle, heroNote;
-  if (st.due > 0) {
+  let heroBig, heroUnit, heroTitle, heroNote, heroAct, heroSub;
+  const ss = S.session;
+  if (ss && ss.ids && ss.ids.length) {
+    const at = Math.min(ss.i || 0, ss.ids.length - 1);
+    const left = ss.ids.length - at - 1;
+    heroBig = at + 1; heroUnit = '/ ' + ss.ids.length + ' 题';
+    heroTitle = '继续上次的练习';
+    heroNote = at === 0
+      ? `上次刚开始，共 ${ss.ids.length} 题`
+      : `上次停在第 ${at + 1} 题，还剩 ${left} 题`;
+    heroAct = "go('quiz')";
+    heroSub = '继续刷题';
+    heroNote += ' · <a class="link" onclick="startOver()">从头开始</a>';
+  } else if (st.due > 0) {
     heroBig = st.due; heroUnit = '道待复习';
     heroTitle = '先把到期的复习题清掉';
     heroNote = '按记忆曲线，这些题现在做效果最好';
@@ -141,13 +158,15 @@ function renderHome() {
     heroTitle = '从第一题开始';
     heroNote = '每天 20 题，两周能把选择题过一遍';
   }
+  heroAct = heroAct || "go('quiz',{mode:'due'})";
+  heroSub = heroSub || (st.due ? '开始复习' : '开始刷题');
   main().innerHTML = `<div class="page">
     <h1>今天刷几道？</h1>
     <div class="sub">Python 训练台 · 题库 ${st.total} 道 · 连续学习 ${s} 天</div>
     <div class="hero">
       <div class="big">${heroBig}<small>${heroUnit}</small></div>
       <div class="txt"><h2>${heroTitle}</h2><p>${heroNote}</p></div>
-      <button class="btn primary" onclick="go('quiz',{mode:'due'})">${st.due ? '开始复习' : '开始刷题'}</button>
+      <button class="btn primary" onclick="${heroAct}">${heroSub}</button>
     </div>
     <div class="cards">
       <div class="card"><div class="k">已练题目</div><div class="v">${st.seen}<small>/ ${st.total}</small></div></div>
@@ -178,17 +197,44 @@ function renderHome() {
 let Q = null;
 function startQuiz(opt) {
   opt = opt || {};
+
+  /* 从导航进来（没指定模式）：优先恢复上次没做完的那一轮 */
+  if (!opt.mode && S.session && S.session.ids && S.session.ids.length) {
+    const list = S.session.ids.map(id => byId[id]).filter(Boolean);
+    if (list.length) {
+      const i = Math.min(S.session.i || 0, list.length - 1);
+      Q = { list, i, picked: S.session.picked || {}, mode: S.session.mode || 'due', ch: S.session.ch || '' };
+      paintQ(); main().scrollTop = 0;
+      toast('继续上次的练习：第 ' + (i + 1) + ' 题');
+      return;
+    }
+  }
+
   let list = ALL.slice();
   if (opt.mode === 'ch') list = list.filter(q => q.ch === opt.ch);
   else if (opt.mode === 'new') list = list.filter(q => !S.rec[q.id] || S.rec[q.id].s === 0);
   else if (opt.mode === 'due') {
     const due = list.filter(q => { const r = S.rec[q.id]; return r && r.s > 0 && (r.due || 0) <= Date.now(); });
     const fresh = list.filter(q => !S.rec[q.id] || S.rec[q.id].s === 0);
-    list = due.concat(shuffle(fresh)).concat(shuffle(list.filter(q => !due.includes(q) && !fresh.includes(q))));
+    list = due.concat(shuffle(fresh));            // 只放「到期该复习」+「没做过」
+    if (!list.length) list = ALL.slice();          // 全做完了才允许重刷
   }
   if (!list.length) { main().innerHTML = `<div class="page"><div class="empty"><div class="big">✓</div>这一类题已经清空了</div></div>`; return; }
-  Q = { list: shuffle(list), i: 0, picked: {}, mode: opt.mode, ch: opt.ch || '' };
+  Q = { list: shuffle(list), i: 0, picked: {}, mode: opt.mode || 'due', ch: opt.ch || '' };
+  saveSession();
   paintQ();
+}
+
+/* ---------- 会话持久化：记住做到第几题 ---------- */
+function saveSession() {
+  if (!Q) return;
+  S.session = {
+    mode: Q.mode || '', ch: Q.ch || '',
+    ids: Q.list.map(q => q.id),
+    i: Q.i, picked: Q.picked || {},
+    ts: Date.now()
+  };
+  save();
 }
 function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0;[a[i], a[j]] = [a[j], a[i]]; } return a; }
 
@@ -232,11 +278,11 @@ function paintQ() {
 function pick(letter) {
   const i = Q.i; if (Q.picked[i] !== undefined) return;
   Q.picked[i] = letter; answer(Q.list[i], letter);
-  paintQ(); paintSide();
+  saveSession(); paintQ(); paintSide();
 }
-function reveal() { const i = Q.i; if (Q.picked[i] === undefined) { Q.picked[i] = ''; answer(Q.list[i], ''); paintQ(); paintSide(); } }
+function reveal() { const i = Q.i; if (Q.picked[i] === undefined) { Q.picked[i] = ''; answer(Q.list[i], ''); saveSession(); paintQ(); paintSide(); } }
 function nextQ() {
-  if (Q.i < Q.list.length - 1) { Q.i++; paintQ(); main().scrollTop = 0; }
+  if (Q.i < Q.list.length - 1) { Q.i++; saveSession(); paintQ(); main().scrollTop = 0; }
   else finishQuiz();
 }
 function finishQuiz() {
@@ -254,10 +300,11 @@ function finishQuiz() {
       <button class="btn" onclick="go('stats')">看统计</button>
       <button class="btn primary" onclick="go('home')">回到概览</button>
     </div></div></div>`;
+  S.session = null; save();
   clearTimer(); paintSide();
   toast('本轮正确率 ' + acc + '%', acc >= 60 ? 'ok' : 'no');
 }
-function prevQ() { if (Q.i > 0) { Q.i--; paintQ(); main().scrollTop = 0; } }
+function prevQ() { if (Q.i > 0) { Q.i--; saveSession(); paintQ(); main().scrollTop = 0; } }
 
 /* ---------- wrong book ---------- */
 function renderWrong() {
@@ -731,7 +778,10 @@ async function doLogout() {
     const sess = await Auth.init();
     if (!sess.user) { Auth.renderGate(() => location.reload()); return; }
     const d = sess.data || {};
-    S = { rec: d.rec || {}, days: d.days || {}, code: d.code || {}, codeDone: d.codeDone || {}, ver: 2 };
+    // 整体合并，保留 rec / days / code / codeDone / session 全部字段
+    S = Object.assign({ rec: {}, days: {}, ver: 2 }, d);
+    if (!S.rec || typeof S.rec !== 'object') S.rec = {};
+    if (!S.days || typeof S.days !== 'object') S.days = {};
     $('#uname').textContent = sess.user;
     $('#avatar').textContent = [...sess.user][0].toUpperCase();
     paintSide(); go('home');

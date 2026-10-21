@@ -435,3 +435,4 @@ h1{font-size:26px; letter-spacing:-.3px; margin-bottom:6px}
   .cards{grid-template-columns:1fr}
   .hero .big{font-size:34px}
 }
+.link{color:var(--accent);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
