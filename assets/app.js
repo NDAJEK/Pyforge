@@ -20,7 +20,7 @@ function stats() {
     if (r && r.s > 0) {
       seen++; ch[q.ch].seen++;
       right += r.c; tries += r.s; ch[q.ch].right += r.c; ch[q.ch].tries += r.s;
-      if (r.w > 0 && (r.due || 0) <= Date.now()) due++;
+      if ((r.due || 0) <= Date.now()) due++;
     }
   });
   return { seen, right, tries, due, ch, total: ALL.length,
@@ -39,11 +39,18 @@ function dkey(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padSt
 function today() { return dkey(new Date()); }
 function tickDay() { S.days[today()] = (S.days[today()] || 0) + 1; }
 
+/* 记忆曲线：答对后按这几档往后推，答错次日重来 */
+const STEPS = [1, 2.5, 6, 15, 30];
+function nextInt(cur) {
+  for (const v of STEPS) if (v > cur) return v;
+  return STEPS[STEPS.length - 1];
+}
+
 function answer(q, choice) {
   const r = S.rec[q.id] || { s: 0, c: 0, w: 0, int: 0, due: 0 };
   const ok = choice === q.a;
   r.s++;
-  if (ok) { r.c++; r.int = r.int ? Math.min(r.int * 2.5, 30) : 1; r.due = Date.now() + r.int * DAY; }
+  if (ok) { r.c++; r.int = nextInt(r.int || 0); r.due = Date.now() + r.int * DAY; }
   else { r.w++; r.int = 0; r.due = Date.now() + DAY; }
   r.last = Date.now();
   S.rec[q.id] = r;
@@ -175,7 +182,7 @@ function startQuiz(opt) {
   if (opt.mode === 'ch') list = list.filter(q => q.ch === opt.ch);
   else if (opt.mode === 'new') list = list.filter(q => !S.rec[q.id] || S.rec[q.id].s === 0);
   else if (opt.mode === 'due') {
-    const due = list.filter(q => { const r = S.rec[q.id]; return r && r.w > 0 && (r.due || 0) <= Date.now(); });
+    const due = list.filter(q => { const r = S.rec[q.id]; return r && r.s > 0 && (r.due || 0) <= Date.now(); });
     const fresh = list.filter(q => !S.rec[q.id] || S.rec[q.id].s === 0);
     list = due.concat(shuffle(fresh)).concat(shuffle(list.filter(q => !due.includes(q) && !fresh.includes(q))));
   }
@@ -703,7 +710,12 @@ function toggleTheme() {
 $('#themeBtn').addEventListener('click', toggleTheme);
 
 /* ---------- nav ---------- */
-document.querySelectorAll('#nav a, #tabbar a').forEach(a => a.addEventListener('click', () => go(a.dataset.view)));
+document.querySelectorAll('#nav a, #tabbar a').forEach(a => a.addEventListener('click', () => {
+  const v = a.dataset.view;
+  // 同一入口重复点击：刷题/模考不重开一轮，避免手滑丢掉当前进度
+  if (v === view && (v === 'quiz' ? !!Q : v === 'exam' ? !!(EX && !EX.done) : true)) return;
+  go(v);
+}));
 $('#logout').addEventListener('click', doLogout);
 async function doLogout() {
   const okd = await confirmDialog({ title: '退出登录', text: '进度已经保存在账号里，下次登录接着来。', ok: '退出' });
@@ -717,7 +729,7 @@ async function doLogout() {
     const sess = await Auth.init();
     if (!sess.user) { Auth.renderGate(() => location.reload()); return; }
     const d = sess.data || {};
-    S = { rec: d.rec || {}, days: d.days || {}, ver: 2 };
+    S = { rec: d.rec || {}, days: d.days || {}, code: d.code || {}, codeDone: d.codeDone || {}, ver: 2 };
     $('#uname').textContent = sess.user;
     $('#avatar').textContent = [...sess.user][0].toUpperCase();
     paintSide(); go('home');

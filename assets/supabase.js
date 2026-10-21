@@ -33,19 +33,29 @@
 
   async function api(path, opt) {
     opt = opt || {};
-    const r = await fetch(base() + path, {
-      method: opt.method || 'GET',
-      headers: Object.assign(headers(opt.token), opt.headers || {}),
-      body: opt.body ? JSON.stringify(opt.body) : undefined
-    });
-    let data = null;
-    const txt = await r.text();
-    if (txt) { try { data = JSON.parse(txt); } catch (e) { data = txt; } }
-    return { ok: r.ok, status: r.status, data };
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), 15000);
+    try {
+      const r = await fetch(base() + path, {
+        method: opt.method || 'GET',
+        headers: Object.assign(headers(opt.token), opt.headers || {}),
+        body: opt.body ? JSON.stringify(opt.body) : undefined,
+        signal: ctl.signal
+      });
+      let data = null;
+      const txt = await r.text();
+      if (txt) { try { data = JSON.parse(txt); } catch (e) { data = txt; } }
+      return { ok: r.ok, status: r.status, data };
+    } catch (e) {
+      return { ok: false, status: 0, data: null, net: true };   // 断网 / 超时 / CORS
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   /* 把 Supabase 的英文错误翻译成能看懂的话 */
   function humanise(d, status) {
+    if (status === 0) return '连不上云端，请检查网络后重试';
     const msg = (d && (d.msg || d.error_description || d.message || d.error)) || '';
     if (/Invalid login credentials/i.test(msg)) return '邮箱或密码错误';
     if (/Email not confirmed/i.test(msg)) return '邮箱还没验证，请先点邮件里的确认链接';

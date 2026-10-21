@@ -1,3 +1,5 @@
 .DS_Store
 server/data/
 *.log
+__pycache__/
+*.pyc

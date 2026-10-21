@@ -111,6 +111,10 @@ def note_fail(key):
 
 USER_RE = re.compile(r'^[A-Za-z0-9_\u4e00-\u9fa5]{3,20}$')
 
+# 只对外提供前端资源；server/（数据库、签名密钥）、setup/、.git/ 一律不外泄
+STATIC_DENY = {'server', 'setup', '.git'}
+MAX_BODY = 2_000_000
+
 
 class Handler(SimpleHTTPRequestHandler):
     server_version = 'ExamPy/2.0'
@@ -118,11 +122,40 @@ class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *a, **kw):
         super().__init__(*a, directory=BASE, **kw)
 
+    # ---------- 安全 ----------
+    def translate_path(self, path):
+        p = super().translate_path(path)
+        rel = os.path.relpath(p, BASE).replace('\\', '/')
+        if rel != '.' and (rel.split('/')[0] in STATIC_DENY
+                           or any(part.startswith('.') for part in rel.split('/'))):
+            return os.path.join(BASE, '__not_found__')
+        return p
+
+    def list_directory(self, path):
+        self.send_error(404, 'Not found')
+        return None
+
+    def end_headers(self):
+        self.send_header('X-Content-Type-Options', 'nosniff')
+        self.send_header('X-Frame-Options', 'SAMEORIGIN')
+        self.send_header('Referrer-Policy', 'same-origin')
+        p = urlparse(getattr(self, 'path', '') or '').path
+        if p.startswith('/api/'):
+            self.send_header('Cache-Control', 'no-store')
+        elif p.startswith(('/vendor/', '/assets/', '/data/')):
+            self.send_header('Cache-Control', 'public, max-age=86400')
+        else:
+            self.send_header('Cache-Control', 'no-cache')
+        super().end_headers()
+
     # ---------- 工具 ----------
     def body(self):
+        """读 JSON 请求体；超过上限返回 None（由调用方回 413），解析失败返回 {}"""
         n = int(self.headers.get('Content-Length') or 0)
-        if n <= 0 or n > 2_000_000:
+        if n <= 0:
             return {}
+        if n > MAX_BODY:
+            return None
         try:
             return json.loads(self.rfile.read(n) or b'{}')
         except Exception:
@@ -133,7 +166,6 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_response(code)
         self.send_header('Content-Type', 'application/json; charset=utf-8')
         self.send_header('Content-Length', str(len(raw)))
-        self.send_header('Cache-Control', 'no-store')
         self.end_headers()
         self.wfile.write(raw)
 
@@ -190,6 +222,8 @@ class Handler(SimpleHTTPRequestHandler):
         if not u:
             return self.send_json({'msg': '未登录'}, 401)
         data = self.body()
+        if data is None:
+            return self.send_json({'msg': '数据过大'}, 413)
         raw = json.dumps(data, ensure_ascii=False)
         if len(raw) > 1_500_000:
             return self.send_json({'msg': '数据过大'}, 413)
@@ -205,6 +239,8 @@ class Handler(SimpleHTTPRequestHandler):
     # ---------- 账号 ----------
     def register(self):
         d = self.body()
+        if d is None:
+            return self.send_json({'msg': '数据过大'}, 413)
         u = str(d.get('username', '')).strip()
         p = str(d.get('password', ''))
         if not USER_RE.match(u):
@@ -226,6 +262,8 @@ class Handler(SimpleHTTPRequestHandler):
 
     def login(self):
         d = self.body()
+        if d is None:
+            return self.send_json({'msg': '数据过大'}, 413)
         u = str(d.get('username', '')).strip()
         p = str(d.get('password', ''))
         key = self.client_key(u)
@@ -241,7 +279,8 @@ class Handler(SimpleHTTPRequestHandler):
         return self.send_json({'ok': True, 'user': u, 'token': make_token(u)})
 
     def log_message(self, fmt, *args):
-        if '/api/' in (args[0] if args else ''):
+        # args[0] 可能是 HTTPStatus（send_error 时），必须 str() 兜底
+        if '/api/' in str(args[0] if args else ''):
             return
 
 

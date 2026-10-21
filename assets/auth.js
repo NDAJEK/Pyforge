@@ -116,15 +116,24 @@
 
     /* ---------- 启动 ---------- */
     async init() {
+      // 显式启动了 server/app.py 就用它（本地自建服务优先于云端配置）
+      if (await this._probe()) {
+        this.mode = 'server';
+        return this._serverInit();
+      }
       if (window.SupaAuth && window.SUPA_CONFIG &&
           window.SUPA_CONFIG.url && window.SUPA_CONFIG.anonKey) {
         this.mode = 'supabase';
-        const s = await SupaAuth.init();
-        this.user = s.user || null;
-        return s;
+        try {
+          const s = await SupaAuth.init();
+          this.user = s.user || null;
+          return s;
+        } catch (e) {
+          this.user = null;
+          return { user: null, data: null };
+        }
       }
-      this.mode = await this._probe() ? 'server' : 'local';
-      if (this.mode === 'server') return this._serverInit();
+      this.mode = 'local';
       return this._localInit();
     },
 
@@ -313,7 +322,12 @@
           err.textContent = '';
           if (tab === 'register' && p !== host.querySelector('#p2').value) { err.textContent = '两次输入的密码不一致'; return; }
           btn.disabled = true; btn.textContent = '处理中…';
-          const res = tab === 'login' ? await this.login(u, p) : await this.register(u, p);
+          let res;
+          try {
+            res = tab === 'login' ? await this.login(u, p) : await this.register(u, p);
+          } catch (e) {
+            res = { ok: false, msg: '连不上服务器，请检查网络后重试' };
+          }
           if (!res.ok) { err.textContent = res.msg; btn.disabled = false; btn.textContent = tab === 'login' ? '登录' : '创建账号'; return; }
           host.style.display = 'none';
           document.getElementById('main').style.display = '';
