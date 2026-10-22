@@ -436,3 +436,32 @@ h1{font-size:26px; letter-spacing:-.3px; margin-bottom:6px}
   .hero .big{font-size:34px}
 }
 .link{color:var(--accent);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+
+/* ---------- Office 实训 ---------- */
+.pt{display:flex;align-items:center;gap:10px;padding:9px 0;font-size:13.5px;border-bottom:1px solid var(--line)}
+.pt:last-child{border-bottom:none}
+.pt .st{width:16px;text-align:center;color:#c3c8d0;font-weight:700}
+.pt .nm{flex:1;line-height:1.5}
+.pt .sc{color:var(--muted);font-size:12px;flex:0 0 auto}
+.pt.p .st{color:var(--ok)}
+.pt.f .st{color:var(--bad)}
+.pt.f .nm{color:var(--bad)}
+
+/* 手机端首页入口：两列网格，避免换行参差 */
+@media (max-width: 760px){
+  .row-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .row-actions .btn{width:100%;flex:none;padding:11px 6px;font-size:13.5px}
+}
+
+/* ---------- 科目切换 ---------- */
+.subswitch{display:flex;gap:4px;background:#f1f3f7;padding:3px;border-radius:9px;margin:0 6px 14px}
+.subswitch button{flex:1;border:none;background:transparent;font-family:inherit;font-size:12.5px;
+  padding:6px 4px;border-radius:7px;color:var(--muted);cursor:pointer;transition:.15s}
+.subswitch button.on{background:#fff;color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.subseg{display:inline-flex;gap:3px;background:#f1f3f7;padding:2px;border-radius:8px}
+.subseg button{border:none;background:transparent;font-family:inherit;font-size:12px;padding:5px 10px;
+  border-radius:6px;color:var(--muted);cursor:pointer}
+.subseg button.on{background:#fff;color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+[data-theme="dark"] .subswitch,[data-theme="dark"] .subseg{background:#12171e}
+[data-theme="dark"] .subswitch button.on,[data-theme="dark"] .subseg button.on{background:#1e2632;color:#fff}
+@media (max-width:760px){ .subswitch{display:none} }

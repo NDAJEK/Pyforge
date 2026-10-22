@@ -79,11 +79,12 @@
 
   function setSession(d) {
     const u = d.user || (sess && sess.user) || {};
+    const md = u.user_metadata || (sess && sess.user && sess.user.md) || {};
     sess = {
       access_token: d.access_token,
       refresh_token: d.refresh_token || (sess && sess.refresh_token),
       expires_at: Date.now() + (d.expires_in || 3600) * 1000,
-      user: { id: u.id, email: u.email }
+      user: { id: u.id, email: u.email, nickname: md.nickname || '' }
     };
     write(sess);
   }
@@ -108,21 +109,24 @@
       const me = await api('/auth/v1/user', { token: t });
       if (!me.ok) { sess = null; write(null); return { user: null, data: null }; }
       const email = (me.data && me.data.email) || sess.user.email;
-      sess.user = { id: me.data.id, email };
+      const md = (me.data && me.data.user_metadata) || {};
+      sess.user = { id: me.data.id, email, nickname: md.nickname || '' };
       write(sess);
       const data = await this.load();
-      return { user: email, data };
+      return { user: email, nickname: md.nickname || email.split('@')[0], data };
     },
 
-    async register(email, password) {
-      const r = await api('/auth/v1/signup', { method: 'POST', body: { email, password } });
+    async register(email, password, nickname) {
+      const body = { email, password };
+      if (nickname) body.data = { nickname: String(nickname).slice(0, 20) };
+      const r = await api('/auth/v1/signup', { method: 'POST', body });
       if (!r.ok) return { ok: false, msg: humanise(r.data, r.status) };
       // 开启了邮箱确认时，signup 不返回 token
       if (!r.data.access_token) {
         return { ok: false, msg: '注册成功，确认邮件已发送。点邮件里的链接验证后再登录（也可以在 Supabase 后台关掉邮箱确认）' };
       }
       setSession(r.data);
-      return { ok: true, user: r.data.user.email };
+      return { ok: true, user: r.data.user.email, nickname: sess.user.nickname || email.split('@')[0] };
     },
 
     async login(email, password) {
@@ -131,7 +135,16 @@
       });
       if (!r.ok) return { ok: false, msg: humanise(r.data, r.status) };
       setSession(r.data);
-      return { ok: true, user: r.data.user.email };
+      return { ok: true, user: r.data.user.email, nickname: sess.user.nickname || email.split('@')[0] };
+    },
+
+    async setNickname(name) {
+      const t = await token();
+      if (!t) return { ok: false, msg: '未登录' };
+      const r = await api('/auth/v1/user', { method: 'PUT', token: t, body: { data: { nickname: name } } });
+      if (!r.ok) return { ok: false, msg: humanise(r.data, r.status) };
+      if (sess && sess.user) { sess.user.nickname = name; write(sess); }
+      return { ok: true, nickname: name };
     },
 
     async logout() {

@@ -756,3 +756,201 @@ window.QUESTIONS = (window.QUESTIONS || []).concat([
  e:"类名后加括号即实例化，Python 自动调用 __new__ 创建对象、再调用 __init__ 初始化。"},
 
 ]);
+
+/* ===== Python 程序设计方法（大纲第七章，新增） ===== */
+window.QUESTIONS = (window.QUESTIONS || []).concat([
+{id:"pm01",ch:"Python 程序设计方法",d:2,q:"用蒙特卡洛方法估算圆周率，基本思路是：",o:[
+"在正方形内随机撒点，统计落在内切圆内的比例，再乘以 4",
+"用二分法不断逼近",
+"直接套用圆面积公式 S=πr²",
+"对 π 做泰勒级数展开"],a:"A",
+e:"点均匀落在正方形内，落在内切圆内的概率 = 圆面积/正方形面积 = π/4，所以比例×4 就是 π 的近似值。"},
+
+{id:"pm02",ch:"Python 程序设计方法",d:2,q:"关于蒙特卡洛方法，下列说法正确的是：",o:[
+"得到的是精确解",
+"随机采样次数越多，结果通常越接近真实值",
+"只能用来求圆周率",
+"不需要用到随机数"],a:"B",
+e:"蒙特卡洛是基于概率统计的数值方法，结果存在随机误差；样本量越大，误差越小，但不是精确解。"},
+
+{id:"pm03",ch:"Python 程序设计方法",d:2,q:"下列问题中，最适合用蒙特卡洛方法求解的是：",o:[
+"解一元二次方程",
+"估算不规则图形的面积",
+"给一组数据排序",
+"在字符串中查找子串"],a:"B",
+e:"难以用解析公式求解的问题（面积、积分、概率、风险模拟）适合用随机模拟近似。"},
+
+{id:"pm04",ch:"Python 程序设计方法",d:2,q:"执行 list(map(lambda x: x * 2, [1, 2, 3])) 的结果是：",o:[
+"[1, 2, 3]","[2, 4, 6]","[1, 4, 9]","报错"],a:"B",
+e:"map 把函数依次作用到每个元素上，返回迭代器，list() 展开为 [2,4,6]。"},
+
+{id:"pm05",ch:"Python 程序设计方法",d:2,q:"执行 list(filter(lambda x: x % 2 == 0, range(6))) 的结果是：",o:[
+"[0, 2, 4]","[1, 3, 5]","[0, 1, 2, 3, 4, 5]","[2, 4]"],a:"A",
+e:"filter 保留使函数返回 True 的元素，range(6) 中是 0、2、4（0 算偶数，且 0 % 2 == 0 为真）。"},
+
+{id:"pm06",ch:"Python 程序设计方法",d:2,q:"在 Python 3 中要使用 reduce() 函数，必须先：",o:[
+"import math",
+"from functools import reduce",
+"import numpy",
+"pip install reduce"],a:"B",
+e:"reduce 在 Python 3 里被移到了 functools 模块中，不再是内置函数。"},
+
+{id:"pm07",ch:"Python 程序设计方法",d:2,q:"与 list(map(lambda x: x + 1, [1, 2, 3])) 结果相同的是：",o:[
+"[x + 1 for x in [1, 2, 3]]",
+"[x for x in [1, 2, 3] if x]",
+"[1, 2, 3]",
+"[x + 1 if x else 0 for x in [1, 2, 3]]"],a:"A",
+e:"列表推导和 map 都是“对每个元素做同样变换”，A 完全等价，结果为 [2,3,4]。"},
+
+{id:"pm08",ch:"Python 程序设计方法",d:1,q:"编写递归函数时必须包含的两个要素是：",o:[
+"循环语句和 break",
+"终止条件（基线条件）和递推关系",
+"全局变量和返回值",
+"迭代器和生成器"],a:"B",
+e:"没有终止条件会无限递归，直到 RecursionError；没有递推关系就无法把问题规模缩小。"},
+
+{id:"pm09",ch:"Python 程序设计方法",d:2,q:"执行下列代码后，输出结果是：\ndef f(n):\n    return n if n <= 1 else n * f(n - 1)\nprint(f(4))",o:["10","24","120","报错"],a:"B",
+e:"这是递归求阶乘：4×3×2×1 = 24。"},
+
+{id:"pm10",ch:"Python 程序设计方法",d:3,q:"n 层汉诺塔最少需要移动的圆盘次数是：",o:["n","2n","2 的 n 次方减 1","n 的平方"],a:"C",
+e:"递推式 h(n) = 2h(n−1) + 1，h(1)=1，解得 h(n) = 2ⁿ − 1。3 层就是 7 次。"},
+
+{id:"pm11",ch:"Python 程序设计方法",d:2,q:"递归调用层数过多时，Python 会抛出：",o:["MemoryError","RecursionError","OverflowError","SyntaxError"],a:"B",
+e:"Python 默认递归深度约 1000 层，超出即抛 RecursionError，提示“maximum recursion depth exceeded”。"},
+
+{id:"pm12",ch:"Python 程序设计方法",d:2,q:"与循环相比，递归的主要缺点是：",o:[
+"代码一定更长",
+"每次调用都占用栈空间，层数多时效率低、可能栈溢出",
+"不能处理复杂问题",
+"无法实现数学运算"],a:"B",
+e:"递归简洁但每次调用有函数调用开销，且受栈深度限制；循环通常更省资源。"},
+
+{id:"pm13",ch:"Python 程序设计方法",d:3,q:"执行下列代码后，输出结果是：\ndef fib(n):\n    return n if n < 2 else fib(n - 1) + fib(n - 2)\nprint(fib(6))",o:["5","8","13","报错"],a:"B",
+e:"数列为 0,1,1,2,3,5,8…，fib(6) = 8（从 0 开始计数）。"},
+
+{id:"pm14",ch:"Python 程序设计方法",d:2,q:"“自顶向下、逐步求精”属于哪种程序设计方法？",o:[
+"结构化程序设计",
+"面向对象程序设计",
+"函数式程序设计",
+"逻辑式程序设计"],a:"A",
+e:"结构化程序设计强调自顶向下、逐步细化、模块化，用顺序/选择/循环三种结构组织程序。"},
+
+{id:"pm15",ch:"Python 程序设计方法",d:1,q:"过程式（面向过程）编程解决问题的基本单位是：",o:[
+"对象","函数（过程）","类","接口"],a:"B",
+e:"过程式以“做什么步骤”为中心，把功能拆成一个个函数；面向对象以“谁来做”为中心。"},
+
+{id:"pm16",ch:"Python 程序设计方法",d:3,q:"下列不属于函数式编程特征的是：",o:[
+"函数可以作为参数传递、也可以作为返回值",
+"强调无副作用，尽量避免修改外部状态",
+"大量使用循环和可变状态",
+"常用 map、filter、reduce 等高阶函数"],a:"C",
+e:"C 描述的是过程式/命令式风格。函数式更倾向用递归、推导式和不可变数据。"},
+
+{id:"pm17",ch:"Python 程序设计方法",d:2,q:"“生态式编程”的核心思想是：",o:[
+"所有功能都自己从零实现",
+"优先复用成熟的第三方库，把精力放在解决问题本身上",
+"只能使用标准库",
+"必须使用面向对象编程"],a:"B",
+e:"Python 的优势在于庞大的计算生态——遇到问题先找库（requests、pandas、jieba…），避免重复造轮子。"},
+
+{id:"pm18",ch:"Python 程序设计方法",d:2,q:"阶乘 n! 的递归定义是：",o:[
+"n! = n × (n−1)!，且 1! = 1",
+"n! = n + (n−1)!，且 1! = 1",
+"n! = n × n!，且 0! = 0",
+"n! = (n−1)! + (n−2)!"],a:"A",
+e:"递归必须体现“规模缩小”和“基线条件”。1! = 1 就是基线条件。"},
+
+{id:"pm19",ch:"Python 程序设计方法",d:3,q:"关于递归与循环，下列说法正确的是：",o:[
+"递归一定能用循环实现",
+"递归比循环更省内存",
+"递归不需要终止条件",
+"循环不能处理递归能处理的问题"],a:"A",
+e:"理论上递归与循环可以互相转换。递归写法更接近数学定义，但每次调用有开销，且受栈深度限制。"},
+
+{id:"pm20",ch:"Python 程序设计方法",d:3,q:"下列代码的功能是：\nimport random\nn = 10000\nhit = 0\nfor i in range(n):\n    x, y = random.random(), random.random()\n    if x * x + y * y <= 1:\n        hit += 1\nprint(hit / n * 4)",o:[
+"求 1 到 n 的平方和",
+"用蒙特卡洛方法估算圆周率 π",
+"统计随机数的个数",
+"计算半径为 1 的圆的精确面积"],a:"B",
+e:"在单位正方形内撒点，落在四分之一圆内的比例约为 π/4，乘以 4 即得 π 的估计值。"}
+]);
+
+/* ===== Python 计算生态（大纲第八章，补强） ===== */
+window.QUESTIONS = (window.QUESTIONS || []).concat([
+{id:"eco17",ch:"Python 计算生态",d:1,q:"turtle 库中，让海龟向前移动 100 像素的语句是：",o:[
+"turtle.move(100)","turtle.forward(100)","turtle.go(100)","turtle.right(100)"],a:"B",
+e:"forward()/fd() 前进，backward() 后退，right()/left() 转向（角度），circle(r) 画圆。"},
+
+{id:"eco18",ch:"Python 计算生态",d:1,q:"turtle.circle(50) 的作用是：",o:[
+"画一个半径为 50 的圆",
+"向前移动 50 像素",
+"把画笔颜色设为 50 号色",
+"清空画布"],a:"A",
+e:"circle(radius) 以当前方向为切线画圆，参数是半径（像素）。"},
+
+{id:"eco19",ch:"Python 计算生态",d:2,q:"turtle 绘图结束后，通常需要调用哪个函数让窗口保持显示？",o:[
+"turtle.stop()","turtle.done()","turtle.close()","turtle.show()"],a:"B",
+e:"done()（或 mainloop()）启动事件循环，否则程序结束窗口立即关闭。"},
+
+{id:"eco20",ch:"Python 计算生态",d:1,q:"要从列表 ['A', 'B', 'C'] 中随机取出一个元素，应使用：",o:[
+"random.random(ls)","random.choice(ls)","random.randint(ls)","random.shuffle(ls)"],a:"B",
+e:"choice(seq) 从序列中随机选一个元素；shuffle() 是原地打乱整个列表。"},
+
+{id:"eco21",ch:"Python 计算生态",d:2,q:"下列关于 random.shuffle(ls) 的说法，正确的是：",o:[
+"返回打乱后的新列表",
+"原地打乱列表，返回 None",
+"只能用于字符串",
+"按升序排序"],a:"B",
+e:"shuffle 是原地操作、无返回值。要保留原列表，先复制一份再打乱。"},
+
+{id:"eco22",ch:"Python 计算生态",d:2,q:"执行 random.seed(1) 的作用是：",o:[
+"设置随机数种子，使每次运行得到相同的随机序列",
+"清空随机数缓存",
+"生成 1 个随机数",
+"限定随机数范围在 1 以内"],a:"A",
+e:"固定种子便于复现实验结果，常用于调试和教学。"},
+
+{id:"eco23",ch:"Python 计算生态",d:1,q:"要让程序暂停 2 秒，应使用：",o:[
+"time.sleep(2)","time.time(2)","time.wait(2)","time.pause(2)"],a:"A",
+e:"time.sleep(秒) 让当前线程暂停；time.time() 返回当前时间戳。"},
+
+{id:"eco24",ch:"Python 计算生态",d:2,q:"time.time() 返回值是：",o:[
+"格式化的日期字符串",
+"从 1970 年 1 月 1 日起经过的秒数（浮点数）",
+"当前进程的运行时长",
+"当天的第几秒"],a:"B",
+e:"这是 Unix 时间戳。常用来计算程序耗时：start = time.time(); ... ; time.time() - start。"},
+
+{id:"eco25",ch:"Python 计算生态",d:1,q:"卸载已安装的第三方库，正确的命令是：",o:[
+"pip remove 库名","pip uninstall 库名","pip delete 库名","pip -d 库名"],a:"B",
+e:"pip install 安装、pip uninstall 卸载、pip list 查看已安装、pip show 查看详情。"},
+
+{id:"eco26",ch:"Python 计算生态",d:2,q:"要把 hello.py 打包成单个可执行文件，应使用：",o:[
+"pyinstaller hello.py","pyinstaller -F hello.py","python -m hello","pip build hello.py"],a:"B",
+e:"PyInstaller 的 -F（--onefile）参数生成单个 exe；-w 可隐藏控制台窗口（GUI 程序常用）。"},
+
+{id:"eco27",ch:"Python 计算生态",d:2,q:"用 jieba 对字符串 s 分词，得到列表的正确写法是：",o:[
+"jieba.split(s)","jieba.lcut(s)","jieba.cut(s) 直接当列表用","jieba.words(s)"],a:"B",
+e:"jieba.lcut(s) 返回列表；jieba.cut(s) 返回生成器，需要 list() 转换才能当列表用。"},
+
+{id:"eco28",ch:"Python 计算生态",d:2,q:"下列关于 NumPy 数组（ndarray）的说法，正确的是：",o:[
+"元素类型可以各不相同",
+"所有元素类型相同，支持向量化运算，速度比 Python 循环快",
+"只能存储一维数据",
+"不能参与数学运算"],a:"B",
+e:"ndarray 是同构数组，底层用 C 实现，向量化运算避免了 Python 循环开销。"},
+
+{id:"eco29",ch:"Python 计算生态",d:2,q:"下列各组中，全部属于第三方库的是：",o:[
+"math、random、time",
+"requests、pandas、matplotlib",
+"turtle、jieba、numpy",
+"sys、os、json"],a:"B",
+e:"math/random/time/turtle/sys/os/json 都是标准库，随解释器安装；requests、pandas、matplotlib、jieba 需要 pip 安装。"},
+
+{id:"eco30",ch:"Python 计算生态",d:1,q:"要做数据可视化（折线图、柱状图），最常用的库是：",o:[
+"jieba","matplotlib","requests","PyInstaller"],a:"B",
+e:"jieba 用于中文分词，requests 做网络请求，PyInstaller 打包程序，matplotlib 负责绘图。"},
+
+{id:"eco31",ch:"Python 计算生态",d:1,q:"下列内置函数中，返回序列最大值的是：",o:["max()","min()","sum()","len()"],a:"A",
+e:"max()/min() 求极值，sum() 求和，len() 求长度，sorted() 排序，abs() 取绝对值。"}
+]);

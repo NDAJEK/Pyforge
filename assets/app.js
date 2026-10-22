@@ -1,13 +1,70 @@
-/* ===== PyForge · Python 训练台 ===== */
-const ALL = (window.QUESTIONS || []).slice();
+/* ===== PyForge · 训练台 ===== */
+const PY_SYLLABUS = [
+  { no: '一', name: 'Python 语言基本语法元素', ch: 'Python 语法元素' },
+  { no: '二', name: '基本数据类型', ch: '基本数据类型' },
+  { no: '三', name: '程序的控制结构', ch: '程序控制结构' },
+  { no: '四', name: '函数和代码复用', ch: '函数与代码复用' },
+  { no: '五', name: '组合数据类型', ch: '组合数据类型' },
+  { no: '六', name: '文件和数据格式化', ch: '文件与数据格式' },
+  { no: '七', name: 'Python 程序设计方法', ch: 'Python 程序设计方法' },
+  { no: '八', name: 'Python 计算生态', ch: 'Python 计算生态' },
+  { no: '·', name: '公共基础知识（选择题前 10 分）', ch: '公共基础知识' },
+  { no: '·', name: '拓展内容（大纲未列此章）', ch: '面向对象（超纲拓展）', extra: true }
+];
+
+const OF_SYLLABUS = [
+  { no: '二', name: 'Word 的功能和使用', ch: 'Word 文字处理' },
+  { no: '三', name: 'Excel 的功能和使用', ch: 'Excel 电子表格' },
+  { no: '四', name: 'PowerPoint 的功能和使用', ch: 'PowerPoint 演示文稿' },
+  { no: '·', name: '计算机基础知识', ch: '计算机基础' },
+  { no: '·', name: '公共基础知识（选择题前 10 分）', ch: '公共基础知识' }
+];
+
+const SUBJECTS = {
+  python: {
+    id: 'python', label: 'Python', name: 'Python 语言程序设计',
+    minutes: 120, choice: 40, ops: 60, opsLabel: '操作题（编程）',
+    examCount: 40, examMinutes: 30,
+    pool: () => (window.QUESTIONS || []),
+    syllabus: PY_SYLLABUS
+  },
+  office: {
+    id: 'office', label: 'Office', name: 'MS Office 高级应用与设计',
+    minutes: 120, choice: 20, ops: 80, opsLabel: '操作题（Word/Excel/PPT）',
+    examCount: 20, examMinutes: 20,
+    pool: () => (window.QUESTIONS || []).filter(q => q.ch === '公共基础知识').concat(window.OFFICE_Q || []),
+    syllabus: OF_SYLLABUS
+  }
+};
+
+let SUB = 'python';
+let ALL = [], CHAPS = [];
 const byId = {};
-ALL.forEach(q => byId[q.id] = q);
+
+function rebuildPool() {
+  ALL = SUBJECTS[SUB].pool().slice();
+  Object.keys(byId).forEach(k => delete byId[k]);
+  ALL.forEach(q => { byId[q.id] = q; });
+  CHAPS = [...new Set(ALL.map(q => q.ch))];
+}
+
+function switchSubject(id) {
+  if (!SUBJECTS[id] || id === SUB) return;
+  SUB = id; S.subject = id; save();
+  rebuildPool(); paintSubject(); paintSide(); go('home');
+}
+
+function paintSubject() {
+  const el = document.getElementById('subswitch');
+  if (!el) return;
+  el.innerHTML = Object.values(SUBJECTS).map(x =>
+    `<button class="${x.id === SUB ? 'on' : ''}" onclick="switchSubject('${x.id}')">${x.label}</button>`).join('');
+}
 
 /* 进度由 Auth 托管：本地模式写 localStorage，服务端模式同步到服务器 */
-let S = { rec: {}, days: {}, ver: 2 };
+let S = { rec: {}, days: {}, ver: 2, subject: 'python' };
 function save() { Auth.save(S); }
 
-const CHAPS = [...new Set(ALL.map(q => q.ch))];
 const DAY = 86400000;
 
 function stats() {
@@ -104,7 +161,7 @@ function go(v, opt) {
   clearTimer(); view = v; opt = opt || {};
   document.querySelectorAll('#nav a, #tabbar a').forEach(a => a.classList.toggle('on', a.dataset.view === v));
   main().scrollTop = 0;
-  const fn = { home: renderHome, wrong: renderWrong, exam: renderExam, stats: renderStats, code: renderCode }[v];
+  const fn = { home: renderHome, wrong: renderWrong, exam: renderExam, stats: renderStats, code: renderCode, syllabus: renderSyllabus, office: renderOffice }[v];
   if (v === 'quiz') startQuiz(opt); else fn();
   if (v !== 'quiz') paintSide();
 }
@@ -162,7 +219,7 @@ function renderHome() {
   heroSub = heroSub || (st.due ? '开始复习' : '开始刷题');
   main().innerHTML = `<div class="page">
     <h1>今天刷几道？</h1>
-    <div class="sub">Python 训练台 · 题库 ${st.total} 道 · 连续学习 ${s} 天</div>
+    <div class="sub">${SUBJECTS[SUB].label} · ${SUBJECTS[SUB].name} · 题库 ${st.total} 道 · 连续学习 ${s} 天</div>
     <div class="hero">
       <div class="big">${heroBig}<small>${heroUnit}</small></div>
       <div class="txt"><h2>${heroTitle}</h2><p>${heroNote}</p></div>
@@ -179,6 +236,8 @@ function renderHome() {
       <button class="btn" onclick="go('wrong')">错题本</button>
       <button class="btn ghost" onclick="go('exam')">模拟考试</button>
       <button class="btn ghost" onclick="go('code')">编程题</button>
+      <button class="btn ghost" onclick="go('office')">Office 实训</button>
+      <button class="btn ghost" onclick="go('syllabus')">考纲对照</button>
     </div>
     <div class="section-title">按章节练习</div>
     <div class="chlist">${CHAPS.map(c => {
@@ -342,11 +401,13 @@ const EXAM_SKIP = ['面向对象（超纲拓展）'];
 function renderExam() {
   const pub = ALL.filter(q => q.ch === '公共基础知识');
   const rest = ALL.filter(q => q.ch !== '公共基础知识' && !EXAM_SKIP.includes(q.ch));
-  const paper = shuffle(pub).slice(0, 10).concat(shuffle(rest).slice(0, 30));
-  EX = { list: shuffle(paper), ans: {}, left: 30 * 60, done: false };
+  const need = SUBJECTS[SUB].examCount - 10;
+  const paper = shuffle(pub).slice(0, 10).concat(shuffle(rest).slice(0, need));
+  const mins = SUBJECTS[SUB].examMinutes || 30;
+  EX = { list: shuffle(paper), ans: {}, left: mins * 60, done: false };
   main().innerHTML = `<div class="page wide">
     <div class="exam-top">
-      <div class="clock" id="clock">30:00</div>
+      <div class="clock" id="clock">${String(mins).padStart(2, '0')}:00</div>
       <div class="info" id="exInfo">选择部分模拟 · ${EX.list.length} 题 · 每题 1 分 · 已答 0</div>
       <button class="btn" onclick="go('home')">放弃</button>
       <button class="btn primary" onclick="submitExam()">交卷</button>
@@ -411,6 +472,32 @@ function submitExam() {
 }
 
 /* ---------- stats ---------- */
+/* ---------- 考纲对照 ---------- */
+function renderSyllabus() {
+  const st = stats();
+  main().innerHTML = `<div class="page wide">
+    <h1>考纲对照</h1>
+    <div class="sub">依据《全国计算机等级考试二级${SUBJECTS[SUB].name}考试大纲（2025 年版）》</div>
+    <div class="cards" style="grid-template-columns:repeat(3,1fr)">
+      <div class="card"><div class="k">考试时长</div><div class="v">${SUBJECTS[SUB].minutes}<small>分钟</small></div></div>
+      <div class="card"><div class="k">单项选择题</div><div class="v">${SUBJECTS[SUB].choice}<small>分</small></div></div>
+      <div class="card"><div class="k">操作题</div><div class="v">${SUBJECTS[SUB].ops}<small>分</small></div></div>
+    </div>
+    <div class="chlist">${SUBJECTS[SUB].syllabus.map(x => {
+    const o = st.ch[x.ch] || { total: 0, seen: 0, right: 0, tries: 0 };
+    const pc = o.tries ? Math.round(o.right / o.tries * 100) : 0;
+    const empty = o.total === 0;
+    return `<div class="chrow" ${empty ? '' : `onclick="go('quiz',{mode:'ch',ch:'${esc(x.ch)}'})"`}>
+        <div class="nm"><b style="color:var(--muted);font-weight:600;margin-right:8px">${x.no}</b>${esc(x.name)}${x.extra ? '<span class="tag" style="margin-left:6px">拓展</span>' : ''}</div>
+        <div class="cnt">${empty ? '暂无题' : (o.seen + '/' + o.total)}</div>
+        <div class="bar"><i style="width:${pc}%"></i></div>
+        <div class="pc">${o.tries ? pc + '%' : '—'}</div>
+      </div>`;
+  }).join('')}</div>
+    <div class="tip" style="margin-top:14px">进度条 = 该章正确率；点击任意一行直接进该章练习。考纲原文见仓库 docs/ 目录。</div>
+  </div>`;
+}
+
 function renderStats() {
   const st = stats();
   const last7 = [];
@@ -442,8 +529,19 @@ function renderStats() {
   }).join('')}
     </div>
     <div class="panel" style="margin-top:16px"><h3>账号</h3>
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:13.5px;margin-bottom:14px">
+        <span style="color:var(--muted)">当前科目</span>
+        <span class="subseg">${Object.values(SUBJECTS).map(x => `<button class="${x.id === SUB ? 'on' : ''}" onclick="switchSubject('${x.id}')">${x.label}</button>`).join('')}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:13.5px;margin-bottom:12px">
+        <span style="color:var(--muted)">昵称</span>
+        <span style="display:flex;align-items:center;gap:8px">
+          <b>${esc(Auth.nickname || Auth.user || '')}</b>
+          <a class="link" style="font-size:12px" onclick="editNickname()">修改</a>
+        </span>
+      </div>
       <div style="display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:12px">
-        <span style="color:var(--muted)">当前账号</span><b>${esc(Auth.user || '未登录')}</b>
+        <span style="color:var(--muted)">账号</span><span style="color:var(--muted);font-size:12.5px">${esc(Auth.user || '未登录')}</span>
       </div>
       <div style="display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:16px">
         <span style="color:var(--muted)">同步方式</span>
@@ -453,6 +551,8 @@ function renderStats() {
         <button class="btn" onclick="toggleTheme()">切换深浅色</button>
         <button class="btn ghost" onclick="openCloudConfig()">云端配置</button>
         <button class="btn ghost" onclick="doLogout()">退出登录</button>
+        <button class="btn ghost" onclick="go('syllabus')">考纲对照</button>
+        <button class="btn ghost" onclick="go('office')">Office 实训</button>
       </div>
     </div>
     <div style="margin-top:20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
@@ -741,6 +841,34 @@ function openCloudConfig() {
   };
 }
 
+/* ---------- 修改昵称 ---------- */
+function editNickname() {
+  const m = document.getElementById('modal');
+  m.querySelector('.modal-box').innerHTML =
+    '<h4>修改昵称</h4>' +
+    '<p>昵称只用于界面显示，不影响登录。</p>' +
+    '<input class="cfg-in" id="nickInput" maxlength="20" placeholder="最多 20 字" value="' + esc(Auth.nickname || '') + '">' +
+    '<div class="gerr" id="nickErr" style="min-height:16px;margin:8px 0 4px"></div>' +
+    '<div class="modal-actions"><button class="btn ghost" data-act="no">取消</button>' +
+    '<button class="btn primary" data-act="yes">保存</button></div>';
+  m.classList.add('on');
+  const close = () => { m.classList.remove('on'); m.onclick = null; };
+  m.onclick = e => { if (e.target === m) close(); };
+  m.querySelector('[data-act="no"]').onclick = close;
+  m.querySelector('[data-act="yes"]').onclick = async () => {
+    const v = m.querySelector('#nickInput').value.trim();
+    const err = m.querySelector('#nickErr');
+    if (!v) { err.textContent = '昵称不能为空'; return; }
+    const r = await Auth.setNickname(v);
+    if (!r.ok) { err.textContent = r.msg || '保存失败'; return; }
+    close();
+    $('#uname').textContent = Auth.nickname;
+    $('#avatar').textContent = [...Auth.nickname][0].toUpperCase();
+    toast('昵称已更新', 'ok');
+    if (view === 'stats') renderStats();
+  };
+}
+
 /* ---------- 主题 ---------- */
 const THEME_KEY = 'pf_theme';
 function applyTheme(t) {
@@ -782,8 +910,11 @@ async function doLogout() {
     S = Object.assign({ rec: {}, days: {}, ver: 2 }, d);
     if (!S.rec || typeof S.rec !== 'object') S.rec = {};
     if (!S.days || typeof S.days !== 'object') S.days = {};
-    $('#uname').textContent = sess.user;
-    $('#avatar').textContent = [...sess.user][0].toUpperCase();
+    SUB = SUBJECTS[S.subject] ? S.subject : 'python';
+    rebuildPool(); paintSubject();
+    const shown = Auth.nickname || sess.user;
+    $('#uname').textContent = shown;
+    $('#avatar').textContent = [...shown][0].toUpperCase();
     paintSide(); go('home');
   } catch (err) {
     document.body.innerHTML = '<pre style="padding:30px;font-size:13px;color:#dc2626">启动失败：' +

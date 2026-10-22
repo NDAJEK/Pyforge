@@ -111,6 +111,7 @@
   const Auth = {
     mode: 'local',
     user: null,
+    nickname: '',
     token: null,
     _server: null,
 
@@ -128,7 +129,8 @@
         try {
           const s = await SupaAuth.init();
           this.user = s.user || null;
-          return { user: s.user, data: this._reconcile(s.user, s.data) };
+          this.nickname = s.nickname || (s.user ? s.user.split('@')[0] : '');
+          return { user: s.user, nickname: this.nickname, data: this._reconcile(s.user, s.data) };
         } catch (e) {
           this.user = null;
           return { user: null, data: null };
@@ -155,6 +157,7 @@
       const s = readJSON(SES_KEY, null);
       if (s && s.exp > now() && readJSON(ACC_KEY, {})[s.u]) {
         this.user = s.u; this.token = s.t;
+        this.nickname = (readJSON(ACC_KEY, {})[s.u] || {}).nickname || s.u;
         return { user: s.u, data: readJSON(DATA_PREFIX + s.u, null) };
       }
       return { user: null, data: null };
@@ -164,14 +167,14 @@
 
     _localSaveAccounts(a) { writeJSON(ACC_KEY, a); },
 
-    async register(username, password) {
+    async register(username, password, nickname) {
       username = String(username || '').trim();
       const bad = (this.mode === 'supabase' ? validateEmail(username) : validateUser(username))
         || validatePass(password);
       if (bad) return { ok: false, msg: bad };
       if (this.mode === 'supabase') {
-        const r = await SupaAuth.register(username, password);
-        if (r.ok) this.user = r.user;
+        const r = await SupaAuth.register(username, password, nickname);
+        if (r.ok) { this.user = r.user; this.nickname = r.nickname || username.split('@')[0]; }
         return r;
       }
       if (this.mode === 'server') return this._serverRegister(username, password);
@@ -180,20 +183,24 @@
       const salt = rand(16);
       const iter = HAS_SUBTLE ? ITER_WEB : ITER_JS;
       const hash = await derive(password, salt, iter);
-      acc[username] = { salt: b64(salt), hash: hex(hash), iter, created: now() };
+      acc[username] = {
+        salt: b64(salt), hash: hex(hash), iter, created: now(),
+        nickname: String(nickname || '').trim().slice(0, 20)
+      };
       this._localSaveAccounts(acc);
       // 首次注册时，把旧版（无账号时代）的进度迁移过来
       const legacy = readJSON('ncre2py_v1', null);
       if (legacy && !readJSON(DATA_PREFIX + username, null)) writeJSON(DATA_PREFIX + username, legacy);
       this._session(username);
-      return { ok: true, user: username };
+      this.nickname = acc[username].nickname || username;
+      return { ok: true, user: username, nickname: this.nickname };
     },
 
     async login(username, password) {
       username = String(username || '').trim();
       if (this.mode === 'supabase') {
         const r = await SupaAuth.login(username, password);
-        if (r.ok) this.user = r.user;
+        if (r.ok) { this.user = r.user; this.nickname = r.nickname || username.split('@')[0]; }
         return r;
       }
       if (this.mode === 'server') return this._serverLogin(username, password);
@@ -204,7 +211,8 @@
       if (hash !== rec.hash) return fail(username, '用户名或密码错误');
       clearFail(username);
       this._session(username);
-      return { ok: true, user: username };
+      this.nickname = acc[username].nickname || username;
+      return { ok: true, user: username, nickname: this.nickname };
     },
 
     _session(username) {
@@ -222,6 +230,25 @@
       if (this.mode === 'server') { try { await fetch('api/logout', { method: 'POST', headers: this._hdr() }); } catch (e) {} localStorage.removeItem(TOKEN_KEY); }
       localStorage.removeItem(SES_KEY);
       this.user = null; this.token = null;
+    },
+
+    /* ---------- 昵称 ---------- */
+    async setNickname(name) {
+      name = String(name || '').trim().slice(0, 20);
+      if (!name) return { ok: false, msg: '昵称不能为空' };
+      if (this.mode === 'supabase') {
+        const r = await SupaAuth.setNickname(name);
+        if (r.ok) this.nickname = name;
+        return r;
+      }
+      if (this.mode === 'local') {
+        const acc = this._localAccounts();
+        if (!acc[this.user]) return { ok: false, msg: '账号不存在' };
+        acc[this.user].nickname = name;
+        this._localSaveAccounts(acc);
+      }
+      this.nickname = name;
+      return { ok: true, nickname: name };
     },
 
     /* ---------- 进度读写 ---------- */
@@ -317,6 +344,8 @@
             <label>${isSupa ? '邮箱' : '用户名'}</label>
             <input id="u" type="${isSupa ? 'email' : 'text'}" maxlength="${isSupa ? 80 : 20}"
               placeholder="${isSupa ? 'you@example.com' : '3-20 位，字母/数字/下划线'}" autocomplete="username">
+            ${tab === 'register' ? `<label>昵称（可选）</label>
+            <input id="n" type="text" maxlength="20" placeholder="显示用，比如：小明">` : ''}
             <label>密码</label>
             <input id="p" type="password" maxlength="64" placeholder="至少 6 位" autocomplete="current-password">
             ${tab === 'register' ? `<label>确认密码</label><input id="p2" type="password" maxlength="64" placeholder="再输一次">` : ''}
@@ -334,6 +363,8 @@
           e.preventDefault();
           const u = host.querySelector('#u').value.trim();
           const p = host.querySelector('#p').value;
+          const nickEl = host.querySelector('#n');
+          const nick = nickEl ? nickEl.value.trim() : '';
           const err = host.querySelector('#gerr');
           const btn = host.querySelector('#gbtn');
           err.textContent = '';
