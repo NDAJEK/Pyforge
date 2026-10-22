@@ -242,8 +242,9 @@ h1{font-size:26px; letter-spacing:-.3px; margin-bottom:6px}
 @media(max-width:1100px){.code-grid{grid-template-columns:1fr}}
 
 /* ---------- 导航图标 / 主题按钮 ---------- */
-#nav a .ni{font-style:normal;width:18px;display:inline-block;text-align:center;margin-right:2px;
-  color:#aab0ba;font-size:13px;transition:color .12s}
+#nav a .ni{font-style:normal;width:20px;height:20px;display:grid;place-items:center;margin-right:6px;
+  color:#a9b0ba;transition:color .12s}
+nav a .ni svg{display:block}
 #nav a:hover .ni{color:#7d8590}
 #nav a.on .ni{color:var(--accent)}
 #nav a{justify-content:flex-start}
@@ -416,7 +417,7 @@ h1{font-size:26px; letter-spacing:-.3px; margin-bottom:6px}
   .tabbar a{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
     padding:8px 0 7px;font-size:10.5px;color:#8a919c;text-decoration:none;cursor:pointer;
     position:relative;transition:color .12s}
-  .tabbar a .i{font-size:17px;line-height:1.1}
+  .tabbar a .i{display:grid;place-items:center;width:22px;height:22px}
   .tabbar a.on{color:var(--accent)}
   .tabbar a b{position:absolute;top:5px;right:calc(50% - 20px);background:var(--bad);color:#fff;
     font-size:9px;font-weight:700;line-height:14px;min-width:14px;border-radius:8px;padding:0 4px;text-align:center}
@@ -465,3 +466,6 @@ h1{font-size:26px; letter-spacing:-.3px; margin-bottom:6px}
 [data-theme="dark"] .subswitch,[data-theme="dark"] .subseg{background:#12171e}
 [data-theme="dark"] .subswitch button.on,[data-theme="dark"] .subseg button.on{background:#1e2632;color:#fff}
 @media (max-width:760px){ .subswitch{display:none} }
+.wx-warn{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;font-size:12px;line-height:1.6;
+  padding:9px 12px;border-radius:9px;margin-bottom:14px;text-align:left}
+[data-theme="dark"] .wx-warn{background:#2a1c10;border-color:#7c4a1e;color:#fdba74}

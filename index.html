@@ -7,7 +7,7 @@
 <meta name="description" content="PyForge · Python 训练台：分级题库、艾宾浩斯复习队列、浏览器内代码判题与模考计时，面向计算机二级 Python。">
 <meta name="theme-color" content="#2f6bf6">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%232f6bf6'/%3E%3Cpath d='M23 47V17h11a9.5 9.5 0 0 1 0 19h-5' stroke='%23fff' stroke-width='6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='44' cy='45' r='4' fill='%238ab0ff'/%3E%3C/svg%3E">
-<link rel="stylesheet" href="assets/style.css?v=76">
+<link rel="stylesheet" href="assets/style.css?v=78">
 </head>
 <body>
 <div id="gate" class="gate"></div>
@@ -23,14 +23,14 @@
   <div class="subswitch" id="subswitch"></div>
 
   <nav id="nav">
-    <a data-view="home"><i class="ni">◆</i>概览</a>
-    <a data-view="quiz"><i class="ni">✎</i>刷题</a>
-    <a data-view="code"><i class="ni">⌘</i>编程题</a>
-    <a data-view="wrong"><i class="ni">✗</i>错题本 <em id="navWrong"></em></a>
-    <a data-view="exam"><i class="ni">◷</i>模考</a>
-    <a data-view="stats"><i class="ni">◑</i>统计</a>
-    <a data-view="syllabus"><i class="ni">▤</i>考纲</a>
-    <a data-view="office"><i class="ni">▦</i>Office 实训</a>
+    <a data-view="home"><i class="ni"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></i>概览</a>
+    <a data-view="quiz"><i class="ni"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></i>刷题</a>
+    <a data-view="code"><i class="ni"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6l-5 6 5 6"/><path d="M16 6l5 6-5 6"/></svg></i>编程题</a>
+    <a data-view="wrong"><i class="ni"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></svg></i>错题本 <em id="navWrong"></em></a>
+    <a data-view="exam"><i class="ni"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></i>模考</a>
+    <a data-view="stats"><i class="ni"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-6M2 20h20"/></svg></i>统计</a>
+    <a data-view="syllabus"><i class="ni"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg></i>考纲</a>
+    <a data-view="office"><i class="ni"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></i>Office 实训</a>
   </nav>
 
   <div class="side-foot">
@@ -53,29 +53,29 @@
 <main id="main"></main>
 
 <nav class="tabbar" id="tabbar">
-  <a data-view="home"><span class="i">◆</span>概览</a>
-  <a data-view="quiz"><span class="i">✎</span>刷题</a>
-  <a data-view="code"><span class="i">⌘</span>编程</a>
-  <a data-view="wrong"><span class="i">✗</span>错题<b id="tabWrong"></b></a>
-  <a data-view="exam"><span class="i">◷</span>模考</a>
-  <a data-view="stats"><span class="i">◑</span>我的</a>
+  <a data-view="home"><span class="i"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></span>概览</a>
+  <a data-view="quiz"><span class="i"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></span>刷题</a>
+  <a data-view="code"><span class="i"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6l-5 6 5 6"/><path d="M16 6l5 6-5 6"/></svg></span>编程</a>
+  <a data-view="wrong"><span class="i"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></svg></span>错题<b id="tabWrong"></b></a>
+  <a data-view="exam"><span class="i"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>模考</a>
+  <a data-view="stats"><span class="i"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-6M2 20h20"/></svg></span>我的</a>
 </nav>
 
 <div id="toasts" class="toasts"></div>
 <div id="modal" class="modal"><div class="modal-box"></div></div>
 
-<script src="data/questions.js?v=76"></script>
-<script src="data/coding.js?v=76"></script>
-<script src="data/office-questions.js?v=76"></script>
-<script src="assets/config.js?v=76"></script>
-<script src="assets/supabase.js?v=76"></script>
-<script src="assets/auth.js?v=76"></script>
-<script src="vendor/jszip.min.js?v=76"></script>
-<script src="assets/office-assets.js?v=76"></script>
-<script src="assets/office.js?v=76"></script>
-<script src="assets/app.js?v=76"></script>
+<script src="data/questions.js?v=78"></script>
+<script src="data/coding.js?v=78"></script>
+<script src="data/office-questions.js?v=78"></script>
+<script src="assets/config.js?v=78"></script>
+<script src="assets/supabase.js?v=78"></script>
+<script src="assets/auth.js?v=78"></script>
+<script src="vendor/jszip.min.js?v=78"></script>
+<script src="assets/office-assets.js?v=78"></script>
+<script src="assets/office.js?v=78"></script>
+<script src="assets/app.js?v=78"></script>
 <!-- Brython 必须静态引入：动态注入时标准库导入会失败 -->
-<script defer src="vendor/brython.min.js?v=76"></script>
-<script defer src="vendor/brython_stdlib.js?v=76"></script>
+<script defer src="vendor/brython.min.js?v=78"></script>
+<script defer src="vendor/brython_stdlib.js?v=78"></script>
 </body>
 </html>

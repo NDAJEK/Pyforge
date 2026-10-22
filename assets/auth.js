@@ -352,6 +352,7 @@
             <div class="gerr" id="gerr"></div>
             <button class="btn primary wide" type="submit" id="gbtn">${tab === 'login' ? '登录' : '创建账号'}</button>
           </form>
+          ${/MicroMessenger/i.test(navigator.userAgent) ? '<div class="wx-warn">微信内置浏览器可能拦截本站链接。<br>点右上角「···」→ 「在浏览器打开」再注册。</div>' : ''}
           <div class="gate-foot"><a class="gate-link" onclick="openCloudConfig()">配置云端同步</a><br>
             ${this.mode === 'supabase' ? '云端账号（Supabase）· 进度自动同步到所有设备'
       : this.mode === 'server' ? '账号存储在服务器，可在多台设备上同步进度'
